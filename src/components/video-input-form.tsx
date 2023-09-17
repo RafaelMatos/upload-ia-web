@@ -12,6 +12,7 @@ import {
 } from "react";
 import { getFFmpeg } from "@/lib/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { api } from "@/lib/axios";
 
 export function VideoInputForm() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -36,12 +37,25 @@ export function VideoInputForm() {
 
     //converter video em audio
     const audioFile =  await convertVideoToAudio(videoFile)
+
+    const data = new FormData()
+
+    data.append('file',audioFile)
+
+    const response = await api.post('/videos',data)
+
+    const videoId = response.data.video.id
+
+    await api.post(`/videos/${videoId}/transcription`,{
+      prompt
+    })
+
   }
 
   async function convertVideoToAudio(video: File) {
     console.log("convert start");
     const ffmpeg = await getFFmpeg();
-
+    console.log('ffmpeg',ffmpeg)
     await ffmpeg.writeFile("input.mp4", await fetchFile(video));
 
     // ffmpeg.on('log', log =>{
